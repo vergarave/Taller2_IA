@@ -65,34 +65,86 @@ class MinimaxAgent(MultiAgentSearchAgent):
         - The next agent is (agent_index + 1) % num_agents. Depth decreases after all agents have moved (full ply).
         - Return the ACTION (not the value) that maximizes the minimax value for the drone.
         """
-        # TODO: Implement your code here
-        return None
 
+        # VERSIÓN INICIAL:
+        # m_agents = state.get_num_agents()
+        #
+        # def minimax(state: GameState, agent: int, depth: int) -> float:
+        #     if state.is_win() or state.is_lose() or depth == 0:
+        #         return self.evaluation_function(state)
+        #
+        # acciones = state.get_legal_actions(agent)
+        # if not acciones:
+        #     return self.evaluation_function(state)
+        #
+        # siguiente_agente = (agent + 1) % m_agents
+        #
+        # if siguiente_agente == 0:
+        #     siguiente_depth = depth - 1
+        # else:
+        #     siguiente_depth = depth
+        #
+        # valores = [
+        #     minimax(state.generate_successor(agent, accion), siguiente_agente, siguiente_depth)
+        #     for accion in acciones
+        # ]
+        #
+        # if agent == 0:
+        #     return max(valores)
+        # else:
+        #     return min(valores)
 
-class AlphaBetaAgent(MultiAgentSearchAgent):
-    """
-    Alpha-Beta pruning agent. Same as Minimax but with alpha-beta pruning.
-    MAX node: prune when value > beta (strict).
-    MIN node: prune when value < alpha (strict).
-    """
+        # PROMPT:
+        # "Ayudame a revisar que el código esté correcto y siga las indicaciones
+        # de minimax, y también ayudame a entender cómo devolver la mejor acción."
 
-    def get_action(self, state: GameState) -> Directions | None:
-        """
-        Returns the best action for the drone using alpha-beta pruning.
+        # CORRECCIÓN:
+        # Se organizó el código para que minimax quede completamente dentro
+        # de get_action y toda la lógica recursiva quede bien implementada.
+        # Además, al final se recorren las acciones legales del drone y se
+        # escoge la que produce el mayor valor minimax.
 
-        Tips:
-        - Same structure as MinimaxAgent, but with alpha-beta pruning.
-        - Alpha: best value MAX can guarantee (initially -inf).
-        - Beta: best value MIN can guarantee (initially +inf).
-        - MAX node: prune when value > beta (strict inequality, do NOT prune on equality).
-        - MIN node: prune when value < alpha (strict inequality, do NOT prune on equality).
-        - Update alpha at MAX nodes: alpha = max(alpha, value).
-        - Update beta at MIN nodes: beta = min(beta, value).
-        - Pass alpha and beta through the recursive calls.
-        """
-        # TODO: Implement your code here (BONUS)
-        return None
+        num_agents = state.get_num_agents()
 
+        def minimax(state: GameState, agent: int, depth: int) -> float:
+            if state.is_win() or state.is_lose() or depth == 0:
+                return self.evaluation_function(state)
+
+            acciones = state.get_legal_actions(agent)
+            if not acciones:
+                return self.evaluation_function(state)
+
+            siguiente_agente = (agent + 1) % num_agents
+
+            if siguiente_agente == 0:
+                siguiente_depth = depth - 1
+            else:
+                siguiente_depth = depth
+
+            valores = [
+                minimax(state.generate_successor(agent, accion), siguiente_agente, siguiente_depth)
+                for accion in acciones
+            ]
+
+            if agent == 0:
+                return max(valores)
+            else:
+                return min(valores)
+
+        acciones = state.get_legal_actions(0)
+        if not acciones:
+            return None
+
+        best_action = max(
+            acciones,
+            key=lambda a: minimax(
+                state.generate_successor(0, a),
+                (0 + 1) % num_agents,
+                self.depth if num_agents > 1 else self.depth - 1
+            )
+        )
+
+        return best_action
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
     """
