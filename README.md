@@ -5,6 +5,7 @@ Integrantes:
 1. Daniel Vergara 202320392
 2. Mariana Rodriguez 202421258
 3. Martin de Angulo 202421628
+4. Yara Gutierrez 202511181
 
 En este archivo puede encontrar comandos de ejecución de todos los layouts con los distintos algoritmos que usted debe implementar. No es necesario que pruebe todas las combinaciones: eliga aquellas que le parezcan interesantes y que le permitan realizar un buen análisis de sus algoritmos. Recuerde que también puede proponer nuevos layouts o editar los existentes. Para los problemas probabilísticos, puede escoger el valor de `p` que le parezca más relevante; se muestran ejemplos con cazadores greedy (p=0), estocásticos (p=1) y mixtos (p=0.3).
 
