@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections import deque
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -166,8 +167,67 @@ def backtracking_ac3(csp: DroneAssignmentCSP) -> dict[str, str] | None:
       - an ac3 function that manages the queue of arcs to check and calls revise.
       - a backtrack function that integrates AC-3 into the search process.
     """
-    # TODO: Implement your code here
-    return None
+    def values_compatible(xi, vi, xj, vj):
+        temp = {}
+        temp[xi] = vi
+        return csp.is_consistent(xj, vj, temp)
+    
+    def revise(xi, xj):
+        revised = False
+        for x in list(csp.domains[xi]):
+            supported = False
+            for y in csp.domains[xj]:
+                if values_compatible(xi, x, xj, y):
+                    supported = True
+                    break
+            if not supported:
+                csp.domains[xi].remove(x)
+                revised = True
+        return revised
+    
+    def ac3(queue):
+        cola = deque(queue)
+        while cola:
+            xi, xj = cola.popleft()
+            if revise(xi, xj):
+                if len(csp.domains[xi]) == 0:
+                    return False
+                for xk in csp.get_neighbors(xi):
+                    if xk != xj:
+                        cola.append((xk, xi))
+        return True
+    
+    variables = list(csp.domains.keys)
+    queue = []
+    for xi in variables:
+        for xj in csp.get_neighbors(xi):
+            queue.append((xi, xj))
+    if not ac3(queue):
+        return None
+    
+    def backtrack(assignment):
+        if csp.is_complete(assignment):
+            return assignment.copy()
+        var = csp.get_unassigned_variables(assignment)[0]
+        for value in list(csp.domains[var]):
+            if not csp.is_consistent(var, value, assignment):
+                continue
+            saved_domains = {v: list(csp.domains[v]) for v in csp.domains}
+            csp.assign(var, value, assignment)
+            csp.domains[var] = [value]
+            queue = []
+            for neihgbor in csp.get_neighbors(var):
+                queue.append((neihgbor, var))
+            if ac3(queue):
+                rta = backtrack(assignment)
+                if rta is not None:
+                    return rta
+            for v in saved_domains:
+                csp.domains[v] = saved_domains[v]
+            csp.unassign(var, assignment)
+        return None
+    return backtrack({})
+    
 
 
 def backtracking_mrv_lcv(csp: DroneAssignmentCSP) -> dict[str, str] | None:
