@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 import math as m
-from algorithms.utils import bfs_distance
+from algorithms.utils import bfs_distance, dijkstra
 
 
 if TYPE_CHECKING:
@@ -43,26 +43,78 @@ def evaluation_function(state: GameState) -> float:
     - Consider edge cases: no pending deliveries, no hunters nearby.
     - A good evaluation function balances delivery progress with hunter avoidance.
     """
-    if state.is_win:
-      return 1000
-    if state.is_lose:
-      return -1000
+    
+    #VERSION INICIAL:
+    #if state.is_win:
+    #  return 1000
+    #if state.is_lose:
+    #  return -1000
+    #drone = state.get_drone_position()
+    #hunters = state.get_hunter_positions()
+    #deliveries = state.get_pending_deliveries()
+    #layout = state.get_layout()
+    #score = state.get_score()
+    #value = score * 5
+    #if deliveries:
+    #  distances = [bfs_distance(layout, drone, d, False) for d in deliveries]
+    #  nearest_delivery = min(distances)
+    #  value += 50 / (nearest_delivery+1)
+    #value -= len(deliveries) * 40
+    #for hunter in hunters:
+    #  distances = bfs_distance(layout, hunter, drone, True)
+    #  if distances == m.inf:
+    #    continue
+    #  if distances == 0:
+    #    return -1000
+    #  value -= 100 / distances
+    #return max (-1000, min(1000, value))
+    
+    #PROMPT:
+    #Ayudame a revisar y corregir la función de evaluación para que cumpla con la funcionalidad esperada, 
+    # indicame los errores que esten presentes.
+    
+    
+
+
+    # Terminal states
+    if state.is_win():
+        return 1000.0
+    if state.is_lose():
+        return -1000.0
+
     drone = state.get_drone_position()
-    hunters = state.get_hunter_position
+    hunters = state.get_hunter_positions()
     deliveries = state.get_pending_deliveries()
     layout = state.get_layout()
     score = state.get_score()
+
     value = score * 5
+
+    # (a) Reward being close to nearest delivery
     if deliveries:
-      distances = [bfs_distance(layout, drone, d, False) for d in deliveries]
-      nearest_delivery = min(distances)
-      value += 50 / (nearest_delivery+1)
+        distances = [bfs_distance(layout, drone, d, False) for d in deliveries]
+        nearest_delivery = min(d for d in distances if d != float("inf"))
+        value += 50 / (nearest_delivery + 1)
+
+    # (d) Penalize pending deliveries
     value -= len(deliveries) * 40
+
+    # (b) Penalize being close to hunters
     for hunter in hunters:
-      distances = bfs_distance(layout, hunter, drone, True)
-      if distances == m.inf:
-        continue
-      if distances == 0:
-        return -1000
-      value -= 100 / distances
-    return max (-1000, min(1000, value))
+        hunter_dist = bfs_distance(layout, drone, hunter, True)
+        if hunter_dist == float("inf"):
+            continue
+        if hunter_dist <= 1:
+            return -1000.0
+        value -= 200 / hunter_dist
+
+    # (f) Delivery urgency: reward deliveries reachable before any hunter
+    if deliveries:
+        for d in deliveries:
+            drone_to_delivery = bfs_distance(layout, drone, d, False)
+            hunter_dists = [bfs_distance(layout, hunter, d, True) for hunter in hunters]
+            min_hunter_dist = min(hunter_dists) if hunter_dists else float("inf")
+            if drone_to_delivery < min_hunter_dist:
+                value += 30
+
+    return max(-1000.0, min(1000.0, value))

@@ -176,4 +176,67 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
         - self.prob is set via the constructor argument prob.
         """
         # TODO: Implement your code here
-        return None
+        
+        #VERSION INICIAL:
+        
+        def expectimax(state, profundidad, agente):
+            num_agentes = state.get_num_agents()
+
+            # Estados terminales
+            if state.is_win() or state.is_lose():
+                return self.evaluation_function(state)
+
+            # Profundidad agotada (después de un ply completo: dron + todos los cazadores)
+            if profundidad == 0 and agente == 0:
+                return self.evaluation_function(state)
+
+            acciones = state.get_legal_actions(agente)
+            if not acciones:
+                return self.evaluation_function(state)
+
+            # Calcular siguiente agente y profundidad
+            siguiente_agente = (agente + 1) % num_agentes
+            siguiente_profundidad = profundidad - 1 if siguiente_agente == 0 else profundidad
+
+            # Dron: nodo MAX
+            if agente == 0:
+                if profundidad == 0:
+                    return self.evaluation_function(state)
+                mejor_valor = float("-inf")
+                for accion in acciones:
+                    sucesor = state.generate_successor(agente, accion)
+                    valor = expectimax(sucesor, siguiente_profundidad, siguiente_agente)
+                    mejor_valor = max(mejor_valor, valor)
+                return mejor_valor
+
+            # Cazador: nodo CHANCE (modelo mixto)
+            else:
+                valores_hijos = []
+                for accion in acciones:
+                    sucesor = state.generate_successor(agente, accion)
+                    valor = expectimax(sucesor, siguiente_profundidad, siguiente_agente)
+                    valores_hijos.append(valor)
+
+                valor_minimo = min(valores_hijos)
+                valor_promedio = sum(valores_hijos) / len(valores_hijos)
+                return (1 - self.prob) * valor_minimo + self.prob * valor_promedio
+
+        # Raíz: el dron es el agente 0, elegir acción con mejor valor expectimax
+        acciones = state.get_legal_actions(self.index)
+        if not acciones:
+            return None
+
+        mejor_accion = None
+        mejor_valor = float("-inf")
+        num_agentes = state.get_num_agents()
+        siguiente_agente = 1 % num_agentes
+        siguiente_profundidad = self.depth - 1 if siguiente_agente == 0 else self.depth
+
+        for accion in acciones:
+            sucesor = state.generate_successor(self.index, accion)
+            valor = expectimax(sucesor, siguiente_profundidad, siguiente_agente)
+            if valor > mejor_valor:
+                mejor_valor = valor
+                mejor_accion = accion
+
+        return mejor_accion

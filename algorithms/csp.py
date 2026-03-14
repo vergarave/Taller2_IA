@@ -197,7 +197,7 @@ def backtracking_ac3(csp: DroneAssignmentCSP) -> dict[str, str] | None:
                         cola.append((xk, xi))
         return True
     
-    variables = list(csp.domains.keys)
+    variables = list(csp.domains.keys())
     queue = []
     for xi in variables:
         for xj in csp.get_neighbors(xi):
