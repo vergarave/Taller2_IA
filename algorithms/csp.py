@@ -6,6 +6,10 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from algorithms.problems_csp import DroneAssignmentCSP
 
+#se implementó un contador de asignaciones para medir el rendimiento de cada algoritmo. 
+# Se puede acceder a este contador con csp.assignment_attempts después de ejecutar la función de búsqueda.
+#se implementó con la ayuda de CODEX
+
 
 def backtracking_search(csp: DroneAssignmentCSP) -> dict[str, str] | None:
     """
@@ -25,6 +29,8 @@ def backtracking_search(csp: DroneAssignmentCSP) -> dict[str, str] | None:
     You can find inspiration in the textbook's pseudocode:
     Artificial Intelligence: A Modern Approach (4th Edition) by Russell and Norvig, Chapter 5: Constraint Satisfaction Problems
     """
+    csp.assignment_attempts = 0
+
     def backtrack(assignment: dict[str, str]) -> dict[str, str] | None:
         # Todas las variables estan asignadas
         if csp.is_complete(assignment):
@@ -32,6 +38,7 @@ def backtracking_search(csp: DroneAssignmentCSP) -> dict[str, str] | None:
         # Primera variable sin asignar
         var = csp.get_unassigned_variables(assignment)[0]
         for value in csp.domains[var]:
+            csp.record_assignment_attempt()
             # Reviso si la asignación es consistente
             if csp.is_consistent(var, value, assignment):
                 csp.assign(var, value, assignment)
@@ -58,6 +65,8 @@ def backtracking_fc(csp: DroneAssignmentCSP) -> dict[str, str] | None:
     - Use csp.is_consistent(neighbor, val, assignment) to check if a value is still consistent.
     - Forward checking reduces the search space by detecting failures earlier than basic backtracking.
     """
+
+    csp.assignment_attempts = 0
 
     # VERSIÓN INICIAL:
     # def backtrack(assignment: dict[str, str]) -> dict[str, str] | None:
@@ -120,6 +129,7 @@ def backtracking_fc(csp: DroneAssignmentCSP) -> dict[str, str] | None:
             return assignment.copy()
         var = csp.get_unassigned_variables(assignment)[0]
         for value in csp.domains[var]:
+            csp.record_assignment_attempt()
             if not csp.is_consistent(var, value, assignment):
                 continue
             csp.assign(var, value, assignment)
@@ -167,6 +177,8 @@ def backtracking_ac3(csp: DroneAssignmentCSP) -> dict[str, str] | None:
       - an ac3 function that manages the queue of arcs to check and calls revise.
       - a backtrack function that integrates AC-3 into the search process.
     """
+    csp.assignment_attempts = 0
+
     def values_compatible(xi, vi, xj, vj):
         temp = {}
         temp[xi] = vi
@@ -210,6 +222,7 @@ def backtracking_ac3(csp: DroneAssignmentCSP) -> dict[str, str] | None:
             return assignment.copy()
         var = csp.get_unassigned_variables(assignment)[0]
         for value in list(csp.domains[var]):
+            csp.record_assignment_attempt()
             if not csp.is_consistent(var, value, assignment):
                 continue
             saved_domains = {v: list(csp.domains[v]) for v in csp.domains}
@@ -242,6 +255,8 @@ def backtracking_mrv_lcv(csp: DroneAssignmentCSP) -> dict[str, str] | None:
       values that rule out the fewest choices for neighboring variables.
     - Use csp.get_num_conflicts(var, value, assignment) to count how many values would be ruled out for neighbors if var=value is assigned.
     """
+    csp.assignment_attempts = 0
+
     def backtrack(assignment):
         if csp.is_complete(assignment):
             return assignment.copy()
@@ -281,6 +296,7 @@ def backtracking_mrv_lcv(csp: DroneAssignmentCSP) -> dict[str, str] | None:
         val_conflicts.sort(key=lambda x: x[1])
 
         for val,_ in val_conflicts:
+            csp.record_assignment_attempt()
             csp.assign(v,val,assignment)
 
             rem ={}

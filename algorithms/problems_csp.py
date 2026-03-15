@@ -50,6 +50,7 @@ class DroneAssignmentCSP:
         self._var_to_index: dict[str, int] = {
             var: i for i, var in enumerate(self.variables)
         }
+        self.assignment_attempts = 0
 
     def _precompute_distances(self) -> None:
         """
@@ -221,6 +222,12 @@ class DroneAssignmentCSP:
         Assign drone value to delivery point var.
         """
         assignment[var] = value
+
+    def record_assignment_attempt(self) -> None:
+        """
+        Count one attempted variable-value assignment during search.
+        """
+        self.assignment_attempts += 1
 
     def unassign(self, var: str, assignment: dict[str, str]) -> None:
         """

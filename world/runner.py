@@ -146,6 +146,7 @@ def run_csp_mode(layout: "DroneLayout", display: CspDisplay, algorithm: str) -> 
         print("\n\u274c No solution found.")
         print("-" * 60)
 
+    print(f"  Assignment attempts: {csp.assignment_attempts}")
     print(f"\n  Time: {elapsed:.4f}s")
     print("=" * 60)
 
