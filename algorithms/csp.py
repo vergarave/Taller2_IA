@@ -242,5 +242,75 @@ def backtracking_mrv_lcv(csp: DroneAssignmentCSP) -> dict[str, str] | None:
       values that rule out the fewest choices for neighboring variables.
     - Use csp.get_num_conflicts(var, value, assignment) to count how many values would be ruled out for neighbors if var=value is assigned.
     """
-    # TODO: Implement your code here (BONUS)
-    return None
+    def backtrack(assignment):
+        if csp.is_complete(assignment):
+            return assignment.copy()
+
+        unassigned=csp.get_unassigned_variables(assignment)
+        # MRV: escoger la variable con menos valores válidos
+        best_var=None
+        best_count= float("inf")
+        best_degree= -1
+
+        for v in unassigned:
+            cu=0
+            for val in csp.domains[v]:
+                if csp.is_consistent(v,val,assignment):
+                    cu +=1
+
+            degree = 0
+            for neighbor in csp.get_neighbors(v):
+                if neighbor not in assignment:
+                    degree += 1
+
+            if cu < best_count:
+                best_count = cu
+                best_var = v
+                best_degree = degree
+            elif cu == best_count and degree > best_degree:
+                best_var = v
+                best_degree = degree
+        v=best_var
+
+        # LCV: ordenar valores por el que menos conflictos genera
+        val_conflicts=[]
+        for val in csp.domains[v]:
+            if csp.is_consistent(v,val,assignment):
+                conflicts = csp.get_num_conflicts(v,val,assignment)
+                val_conflicts.append((val,conflicts))
+        val_conflicts.sort(key=lambda x: x[1])
+
+        for val,_ in val_conflicts:
+            csp.assign(v,val,assignment)
+
+            rem ={}
+            failed=False
+
+            # Forward Checking
+            for vecino in csp.get_neighbors(v):
+                if vecino not in assignment:
+                    rem[vecino]=[]
+
+                    for neighbor_value in list(csp.domains[vecino]):
+                        if not csp.is_consistent(vecino,neighbor_value, assignment):
+                            csp.domains[vecino].remove(neighbor_value)
+                            rem[vecino].append(neighbor_value)
+                    if len(csp.domains[vecino]) == 0:
+                        failed = True
+                        break
+            
+            #recursión
+            if not failed:
+                resultado = backtrack(assignment)
+                if resultado is not None:
+                    return resultado
+
+            # restaurar dominios
+            for neighbor in rem:
+                for val in rem[neighbor]:
+                    csp.domains[neighbor].append(val)
+            csp.unassign(v,assignment)
+
+        return None
+
+    return backtrack({})
